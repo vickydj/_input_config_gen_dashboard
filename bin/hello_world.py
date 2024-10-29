@@ -77,19 +77,22 @@ def post_to_ds(dashboard_payload):
 
 def stream(results, keywords, argvals):
     logger.info("Stream function called")
+    logger.debug(f"Input results: {results}")
     try:
         dashboard_payload = parse_args(results, keywords, argvals)
-        
-        dashboard_payload = json.dumps(dashboard_payload, indent=2)
-        logger.debug(f"Message: {dashboard_payload}")
+        logger.debug(f"Sent payload: {post_to_ds(dashboard_payload)}")
+        # dashboard_payload = json.dumps(dashboard_payload, indent=2)
+        logger.debug(f"Message dashboard_payload sent: {dashboard_payload}")
 
-        sent_payload = post_to_ds(dashboard_payload)
-        logger.debug(f"Sent payload: {sent_payload}")
+        yield {
+            'payload': f"dashboard_payload: {dashboard_payload}",
+            'status': 200
+        }
 
 
-        for result in results:
-            result['payload'] = f"dashboard_payload: {dashboard_payload}"
-            yield result
+        # for result in results:
+        #     result['payload'] = f"dashboard_payload: {dashboard_payload}"
+        #     yield result
 
     except Exception as e:
         logger.error(f"Error in stream function: {str(e)}", exc_info=True)
@@ -109,7 +112,8 @@ if __name__ == '__main__':
             results, dummyresults, settings = splunk.Intersplunk.getOrganizedResults()
             keywords, argvals = splunk.Intersplunk.getKeywordsAndOptions()
             streaming_results = list(stream(results, keywords, argvals))
-            splunk.Intersplunk.outputResults(streaming_results)
+            # splunk.Intersplunk.outputResults("output to splunk test")
+            # splunk.Intersplunk.outputResults(streaming_results)
     except Exception as e:
         error_message = f"Error in script execution: {str(e)}"
         logger.error(error_message, exc_info=True)
